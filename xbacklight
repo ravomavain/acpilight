@@ -75,6 +75,8 @@ def main():
                     default=200, help="Fading period (in milliseconds, default: 200)")
     ap.add_argument("-steps", type=int,
                     default=0, help="Fading steps (default: 0)")
+    ap.add_argument("-min", metavar="PERCENT", type=int, help="Minimum brightness")
+    ap.add_argument("-max", metavar="PERCENT", type=int, help="Maximum brightness")
     ap.add_argument("-raw", action="store_true", help="Use raw values instead of percents")
     ap.add_argument("-display", help="Ignored")
 
@@ -107,7 +109,15 @@ def main():
                 target = current + args.inc
             elif args.dec is not None:
                 target = current - args.dec
-            target = clamp(target, 0, ctrl.raw_max())
+            if args.min is None:
+                args.min = 0
+            else:
+                args.min = max(0, args.min)
+            if args.max is None:
+                args.max = ctrl.raw_max()
+            else:
+                args.max = min(ctrl.raw_max(), args.max)
+            target = clamp(target, args.min, args.max)
             if current == target:
                 pass
             elif args.steps < 1 or args.time < 1:
@@ -125,7 +135,15 @@ def main():
                 target = current + args.inc
             elif args.dec is not None:
                 target = current - args.dec
-            target = clamp(target, 0, 100)
+            if args.min is None:
+                args.min = 0
+            else:
+                args.min = max(0, args.min)
+            if args.max is None:
+                args.max = 100
+            else:
+                args.max = min(100, args.max)
+            target = clamp(target, args.min, args.max)
             if current == target:
                 pass
             elif args.steps < 1 or args.time < 1:
