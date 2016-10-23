@@ -45,14 +45,18 @@ class Controller(object):
     def set_brightness(self, pc):
         self.set_raw_brightness(round(pc * self._max_brightness / 100))
 
+    def sweep_raw_brightness(self, target, steps, delay):
+        sleep = (delay / 1000.) / steps
+        current = self.raw_brightness()
+        for s in range(1, steps):
+            b = current + round( (target - current) * s / steps )
+            self.set_raw_brightness(b)
+            time.sleep(sleep)
+        ctrl.set_brightness(target)
 
-def sweep_brightness(ctrl, current, target, steps, delay):
-    sleep = (delay / 1000.) / steps
-    for s in range(1, steps):
-        pc = current + round((target - current) * s / steps)
-        ctrl.set_brightness(pc)
-        time.sleep(sleep)
-    ctrl.set_brightness(target)
+    def sweep_brightness(self, target, steps, delay):
+        raw_target = round(target * self._max_brightness / 100)
+        self.sweep_raw_brightness(self, raw_target, steps, delay)
 
 
 def main():
@@ -103,7 +107,7 @@ def main():
         elif args.steps < 1 or args.time < 1:
             ctrl.set_brightness(target)
         else:
-            sweep_brightness(ctrl, current, target, args.steps, args.time)
+            ctrl.sweep_brightness(target, args.steps, args.time)
 
     return 0
 
