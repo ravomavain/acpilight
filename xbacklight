@@ -33,6 +33,9 @@ class Controller(object):
         self._max_brightness = int(open(os.path.join(
             SYS_PATH, ctrl, "max_brightness")).read())
 
+    def raw_max(self):
+        return self._max_brightness
+
     def raw_brightness(self):
         return int(open(self._brightness_path).read())
 
@@ -72,7 +75,9 @@ def main():
                     default=200, help="Fading period (in milliseconds, default: 200)")
     ap.add_argument("-steps", type=int,
                     default=0, help="Fading steps (default: 0)")
+    ap.add_argument("-raw", action="store_true", help="Use raw values instead of percents")
     ap.add_argument("-display", help="Ignored")
+
     args = ap.parse_args()
 
     # list controllers
@@ -91,23 +96,42 @@ def main():
         ctrl = Controller(args.ctrl)
 
     # perform the requested action
-    if args.get:
-        print(ctrl.brightness())
-    else:
-        current = ctrl.brightness()
-        if args.set is not None:
-            target = args.set
-        elif args.inc is not None:
-            target = current + args.inc
-        elif args.dec is not None:
-            target = current - args.dec
-        target = clamp(target, 0, 100)
-        if current == target:
-            pass
-        elif args.steps < 1 or args.time < 1:
-            ctrl.set_brightness(target)
+    if args.raw:
+        if args.get:
+            print(ctrl.raw_brightness())
         else:
-            ctrl.sweep_brightness(target, args.steps, args.time)
+            current = ctrl.raw_brightness()
+            if args.set is not None:
+                target = args.set
+            elif args.inc is not None:
+                target = current + args.inc
+            elif args.dec is not None:
+                target = current - args.dec
+            target = clamp(target, 0, ctrl.raw_max())
+            if current == target:
+                pass
+            elif args.steps < 1 or args.time < 1:
+                ctrl.set_raw_brightness(target)
+            else:
+                ctrl.sweep_raw_brightness(target, args.steps, args.time)
+    else:
+        if args.get:
+            print(ctrl.brightness())
+        else:
+            current = ctrl.brightness()
+            if args.set is not None:
+                target = args.set
+            elif args.inc is not None:
+                target = current + args.inc
+            elif args.dec is not None:
+                target = current - args.dec
+            target = clamp(target, 0, 100)
+            if current == target:
+                pass
+            elif args.steps < 1 or args.time < 1:
+                ctrl.set_brightness(target)
+            else:
+                ctrl.sweep_brightness(target, args.steps, args.time)
 
     return 0
 
